@@ -20,6 +20,7 @@ def test_ema200_emits_research_candidate_after_closed_bar_cross():
     assert candidate.direction == "long"
     assert candidate.stop_loss < candidate.entry_price < candidate.take_profit
     assert candidate.data_quality_valid is False  # must pass separate quality gate
+    assert candidate.currency_exposures == ["EUR", "USD"]
 
 
 def test_ema200_ignores_forming_bar():
