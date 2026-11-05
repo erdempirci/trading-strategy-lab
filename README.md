@@ -46,6 +46,17 @@ pip install -e ".[dev]"
 uvicorn app.main:app --reload
 ```
 
+## Deploying on Vercel (two projects, one repo)
+The API and dashboard are separate Vercel projects from this same repository.
+
+1. **API** — *Add New → Project →* import `trading-strategy-lab`.
+   Root Directory: repository root. Framework: FastAPI (auto-detected).
+   `vercel.json` pins the function to `fra1` (Frankfurt).
+   Optional env: `BINANCE_BASE_URL`.
+2. **Dashboard** — import the same repo again.
+   Root Directory: `web`. Framework: Next.js (auto-detected).
+   Env: `API_URL` = the API project's URL from step 1, e.g. `https://my-api.vercel.app`.
+
 ## Data architecture
 - Normalize all market bars to UTC OHLCV: timestamp, open, high, low, close, volume.
 - Binance: optional CCXT adapter (public market data; exchange limits apply).
