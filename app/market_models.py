@@ -13,7 +13,7 @@ class MarketSession(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     weekday: int = Field(ge=0, le=6, description="Monday=0, Sunday=6")
-    open_time: str = Field(pattern=r"^([01]\\d|2[0-3]):[0-5]\\d$")
+    open_time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
     close_time: str = Field(pattern=r"^([01]\\d|2[0-3]):[0-5]\\d$")
     timezone: str = "UTC"
 
@@ -34,6 +34,9 @@ class ContractSpec(BaseModel):
     taker_fee_rate: float = Field(default=0.0, ge=0, le=1)
     swap_long: float | None = None
     swap_short: float | None = None
+    profit_currency: str | None = Field(default=None, min_length=2, max_length=12)
+    margin_currency: str | None = Field(default=None, min_length=2, max_length=12)
+    digits: int | None = Field(default=None, ge=0, le=12)
 
     @model_validator(mode="after")
     def validate_quantity_bounds(self):
