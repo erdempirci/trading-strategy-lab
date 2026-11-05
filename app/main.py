@@ -5,9 +5,20 @@ from app.services.backtester import run_ema_backtest
 
 app = FastAPI(
     title="Trading Strategy Lab API",
-    version="0.1.0",
+    version="0.1.1",
     description="Research-only strategy backtesting API. Live trading is disabled.",
 )
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "service": "Trading Strategy Lab",
+        "status": "running",
+        "message": "API is online. Open /docs to use the API.",
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 
 @app.get("/health")
