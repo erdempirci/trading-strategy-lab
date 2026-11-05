@@ -60,7 +60,7 @@ class EMA200TrendStrategy(Strategy):
             candidate_id=str(uuid4()), strategy_id=self.strategy_id, strategy_version=self.version,
             instrument_id=instrument_id, symbol=symbol, timeframe=timeframe, direction=direction,
             created_at=datetime.now(timezone.utc), signal_bar_close_time=stamp,
-            expires_at=stamp + timedelta(hours=4), entry_price=entry, stop_loss=stop,
+            expires_at=max(stamp + timedelta(hours=4), datetime.now(timezone.utc) + timedelta(hours=4)), entry_price=entry, stop_loss=stop,
             take_profit=target, regime_fit=0.0, signal_quality=0.0,
             data_quality_valid=False, evidence=["EMA200 close crossover", "ATR stop distance"],
         )]
