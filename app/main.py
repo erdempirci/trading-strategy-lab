@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.data_adapters.binance import BinanceDataError, fetch_binance_ohlcv
@@ -15,7 +15,15 @@ app = FastAPI(
     title="Trading Strategy Lab API",
     version=ENGINE_VERSION,
     description="Research-only strategy backtesting API. Live trading is disabled.",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+    redoc_url=None,
 )
+
+# Every endpoint is served under /api (how the single-project Vercel deployment
+# routes to this service, which receives the original path) and, for local use
+# and backwards compatibility, at the bare path too.
+router = APIRouter()
 
 # The dashboard normally calls the API through its own server-side proxy, so
 # CORS is only needed for direct browser access (e.g. local dev on :3000).
@@ -54,23 +62,23 @@ def _candles_with_ema(frame, fast_period: int, slow_period: int) -> list[dict]:
     ]
 
 
-@app.get("/")
+@router.get("/")
 def root() -> dict[str, str]:
     return {
         "service": "Trading Strategy Lab",
         "status": "running",
-        "message": "API is online. Open /docs to use the API.",
-        "docs": "/docs",
-        "health": "/health",
+        "message": "API is online. Open /api/docs to use the API.",
+        "docs": "/api/docs",
+        "health": "/api/health",
     }
 
 
-@app.get("/health")
+@router.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "trading-strategy-lab", "engine_version": ENGINE_VERSION}
 
 
-@app.get("/market-data/demo")
+@router.get("/market-data/demo")
 def get_demo_data(symbol: str = "BTC/USDT", timeframe: str = "1h", bars: int = 500) -> dict:
     if bars < 50 or bars > 5000:
         raise HTTPException(status_code=400, detail="bars must be between 50 and 5000")
@@ -79,7 +87,7 @@ def get_demo_data(symbol: str = "BTC/USDT", timeframe: str = "1h", bars: int = 5
             "data": frame.tail(10).to_dict(orient="records")}
 
 
-@app.get("/market-data/binance")
+@router.get("/market-data/binance")
 def get_binance_data(symbol: str = "BTC/USDT", timeframe: str = "1h", bars: int = 500) -> dict:
     if bars < 1 or bars > 5000:
         raise HTTPException(status_code=400, detail="bars must be between 1 and 5000")
@@ -89,7 +97,7 @@ def get_binance_data(symbol: str = "BTC/USDT", timeframe: str = "1h", bars: int 
             "data": frame.tail(10).to_dict(orient="records")}
 
 
-@app.post("/backtests")
+@router.post("/backtests")
 def create_backtest(request: BacktestRequest) -> dict:
     if request.strategy != "ema_crossover":
         raise HTTPException(status_code=400, detail="Only ema_crossover is available in MVP")
@@ -134,3 +142,7 @@ def create_backtest(request: BacktestRequest) -> dict:
         },
         **result,
     }
+
+
+app.include_router(router, prefix="/api")
+app.include_router(router, include_in_schema=False)

@@ -1,12 +1,13 @@
 import type { NextConfig } from "next";
 
-// The browser talks only to this app; /api/* is proxied server-side to the
-// FastAPI service, so no CORS setup or exposed API URL is needed.
-const API_URL = (process.env.API_URL || "https://trading-strategy-lab-omega.vercel.app").replace(/\/$/, "");
+// Production (single Vercel project, Services): vercel.json routes /api/* to the
+// FastAPI service on the same domain, so no rewrite is needed here.
+// Local dev: set API_URL (e.g. http://127.0.0.1:8000) to proxy /api/* to uvicorn.
+const API_URL = process.env.API_URL?.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${API_URL}/:path*` }];
+    return API_URL ? [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }] : [];
   },
 };
 

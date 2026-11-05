@@ -34,3 +34,11 @@ def test_backtest_candles_for_chart():
     assert candles[0]["ema_slow"] is None and candles[-1]["ema_slow"] is not None
     assert all(a["time"] < b["time"] for a, b in pairwise(candles))
     assert "candles" not in client.post("/backtests", json={"bars": 300}).json()
+
+
+def test_routes_served_under_api_prefix_and_bare():
+    assert client.get("/api/health").json()["status"] == "ok"
+    assert client.post("/api/backtests", json={"bars": 300}).status_code == 200
+    assert client.get("/api/docs").status_code == 200
+    paths = client.get("/api/openapi.json").json()["paths"]
+    assert "/api/backtests" in paths and "/backtests" not in paths

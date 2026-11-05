@@ -20,7 +20,7 @@ AI-assisted, multi-market strategy research and backtesting workspace.
 cp .env.example .env
 docker compose up --build
 ```
-Open http://localhost:8000/docs and run:
+Open http://localhost:8000/api/docs and run:
 - `GET /health`
 - `GET /market-data/demo?symbol=BTC/USDT&timeframe=1h&bars=500`
 - `POST /backtests` with body:
@@ -46,16 +46,15 @@ pip install -e ".[dev]"
 uvicorn app.main:app --reload
 ```
 
-## Deploying on Vercel (two projects, one repo)
-The API and dashboard are separate Vercel projects from this same repository.
+## Deploying on Vercel (one project)
+`vercel.json` uses Vercel Services: the Next.js dashboard (`web/`) and the FastAPI
+API (`app/`) deploy together on one domain.
 
-1. **API** — *Add New → Project →* import `trading-strategy-lab`.
-   Root Directory: repository root. Framework: FastAPI (auto-detected).
-   `vercel.json` pins the function to `fra1` (Frankfurt).
-   Optional env: `BINANCE_BASE_URL`.
-2. **Dashboard** — import the same repo again.
-   Root Directory: `web`. Framework: Next.js (auto-detected).
-   Env: `API_URL` = the API project's URL from step 1, e.g. `https://my-api.vercel.app`.
+- `/api/*` → FastAPI (e.g. `/api/health`, `/api/docs`, `POST /api/backtests`)
+- everything else → dashboard
+
+Import the repo on Vercel with Root Directory `./` and Application Preset **Services**.
+No environment variables are required. Optional: `BINANCE_BASE_URL`.
 
 ## Data architecture
 - Normalize all market bars to UTC OHLCV: timestamp, open, high, low, close, volume.
