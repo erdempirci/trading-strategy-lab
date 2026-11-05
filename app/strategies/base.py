@@ -45,8 +45,8 @@ class SignalCandidate(BaseModel):
 
     @model_validator(mode="after")
     def validate_trade_geometry(self):
-        if not self.created_at <= self.signal_bar_close_time <= self.expires_at:
-            raise ValueError("candidate timestamps are inconsistent")
+        if not self.signal_bar_close_time <= self.created_at <= self.expires_at:
+            raise ValueError("candidate timestamps must satisfy signal close <= creation <= expiry")
         if self.direction == "long" and not self.stop_loss < self.entry_price < self.take_profit:
             raise ValueError("long candidate requires stop < entry < target")
         if self.direction == "short" and not self.take_profit < self.entry_price < self.stop_loss:
