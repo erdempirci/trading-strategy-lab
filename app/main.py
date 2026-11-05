@@ -1,4 +1,7 @@
+import os
+
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.data_adapters.binance import BinanceDataError, fetch_binance_ohlcv
 from app.data_adapters.normalize import quality_report
@@ -14,6 +17,12 @@ app = FastAPI(
     description="Research-only strategy backtesting API. Live trading is disabled.",
 )
 
+# The dashboard normally calls the API through its own server-side proxy, so
+# CORS is only needed for direct browser access (e.g. local dev on :3000).
+_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")]
+app.add_middleware(CORSMiddleware, allow_origins=[o for o in _origins if o],
+                   allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
+
 
 def _load_frame(source: str, symbol: str, timeframe: str, bars: int):
     try:
@@ -24,6 +33,25 @@ def _load_frame(source: str, symbol: str, timeframe: str, bars: int):
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _candles_with_ema(frame, fast_period: int, slow_period: int) -> list[dict]:
+    data = frame.sort_values("timestamp").reset_index(drop=True)
+    ema_fast = data["close"].ewm(span=fast_period, adjust=False).mean()
+    ema_slow = data["close"].ewm(span=slow_period, adjust=False).mean()
+    warm = slow_period - 1
+    return [
+        {
+            "time": int(row.timestamp.timestamp()),
+            "open": round(float(row.open), 8),
+            "high": round(float(row.high), 8),
+            "low": round(float(row.low), 8),
+            "close": round(float(row.close), 8),
+            "ema_fast": round(float(ema_fast.iloc[i]), 8) if i >= warm else None,
+            "ema_slow": round(float(ema_slow.iloc[i]), 8) if i >= warm else None,
+        }
+        for i, row in enumerate(data.itertuples(index=False))
+    ]
 
 
 @app.get("/")
@@ -82,6 +110,8 @@ def create_backtest(request: BacktestRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if not request.include_trades:
         result.pop("trades")
+    if request.include_candles:
+        result["candles"] = _candles_with_ema(frame, request.fast_period, request.slow_period)
 
     return {
         "symbol": request.symbol,

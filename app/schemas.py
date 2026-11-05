@@ -15,6 +15,7 @@ class BacktestRequest(BaseModel):
     fee_bps: float = Field(default=5, ge=0, le=500)
     slippage_bps: float = Field(default=2, ge=0, le=500)
     include_trades: bool = True
+    include_candles: bool = False
 
     @model_validator(mode="after")
     def _check_periods(self) -> "BacktestRequest":
