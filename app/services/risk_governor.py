@@ -1,5 +1,6 @@
 """Deterministic fail-closed portfolio risk gate for paper trading only."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from decimal import Decimal, ROUND_DOWN
 from typing import Literal
 
@@ -78,7 +79,7 @@ class RiskGovernor:
             reasons.append("live_execution_forbidden_in_this_release")
         if not candidate.data_quality_valid:
             reasons.append("market_data_not_validated")
-        if candidate.expires_at <= __import__("datetime").datetime.now(__import__("datetime").timezone.utc):
+        if candidate.expires_at <= datetime.now(timezone.utc):
             reasons.append("expired_candidate")
         if account.equity <= 0 or account.high_water_mark <= 0:
             reasons.append("invalid_equity_state")
