@@ -12,3 +12,4 @@ htmlcov/
 .vscode/
 data/
 *.parquet
+*.egg-info/

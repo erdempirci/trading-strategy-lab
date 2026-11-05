@@ -1,12 +1,16 @@
 import hashlib
+
 import numpy as np
 import pandas as pd
+
+from app.services.timeframes import pandas_freq
 
 
 def demo_ohlcv(symbol: str = "BTC/USDT", timeframe: str = "1h", bars: int = 1000) -> pd.DataFrame:
     """Return deterministic synthetic OHLCV data; not real market prices."""
     if bars < 2:
         raise ValueError("bars must be at least 2")
+    freq = pandas_freq(timeframe)
     digest = hashlib.sha256(f"{symbol}:{timeframe}".encode()).digest()
     seed = int.from_bytes(digest[:4], "big")
     rng = np.random.default_rng(seed)
@@ -18,7 +22,8 @@ def demo_ohlcv(symbol: str = "BTC/USDT", timeframe: str = "1h", bars: int = 1000
     high = np.maximum(open_, close) * (1 + spread)
     low = np.minimum(open_, close) * (1 - spread)
     volume = rng.lognormal(mean=7, sigma=0.5, size=bars)
-    timestamps = pd.date_range(end=pd.Timestamp.now(tz="UTC").floor("h"), periods=bars, freq="h")
+    end = pd.Timestamp.now(tz="UTC").floor(freq)
+    timestamps = pd.date_range(end=end, periods=bars, freq=freq)
     return pd.DataFrame({
         "timestamp": timestamps,
         "open": open_,
