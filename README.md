@@ -21,7 +21,7 @@ AI-assisted, multi-market strategy research and autonomous paper-trading workspa
 - Docker Compose development environment
 - Separate dashboard deployment path under web
 
-See docs/architecture.md, docs/autonomous-trading-roadmap.md, and docs/agent-contracts.md.
+See docs/architecture.md, docs/autonomous-trading-roadmap.md, docs/agent-contracts.md, and docs/forex-m1-m4-implementation.md.
 
 ## Quick start (Docker)
 ```bash
