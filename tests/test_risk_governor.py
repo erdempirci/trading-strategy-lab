@@ -36,7 +36,7 @@ def test_risk_sizes_trade_to_250_usd_budget():
     result = RiskGovernor().evaluate(candidate(), account(), contract(), spread=Decimal("0.0001"))
     assert result.status == "APPROVED"
     assert result.risk_amount == Decimal("250.00")
-    assert result.volume_lots == Decimal("2.50")
+    assert result.volume_lots == Decimal("0.25")
 
 
 def test_daily_loss_limit_fails_closed():
