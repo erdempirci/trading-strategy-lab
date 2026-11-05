@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from app.market_models import ContractSpec, Instrument, OHLCVBar, Quote
+from app.market_models import ContractSpec, Instrument, MarketSession, OHLCVBar, Quote
 from app.services.data_quality import assess_ohlcv_quality
 
 
@@ -80,3 +80,17 @@ def test_quality_gate_rejects_empty_dataset():
     )
     assert result["valid"] is False
     assert result["reason"] == "empty_dataset"
+
+
+def test_forex_contract_metadata_and_session_time_validation():
+    contract = ContractSpec(
+        tick_size=0.00001, tick_value=1.0, quote_currency="USD", base_currency="EUR",
+        quantity_step=0.01, min_quantity=0.01, profit_currency="USD",
+        margin_currency="USD", digits=5,
+    )
+    assert contract.profit_currency == "USD"
+    assert contract.digits == 5
+    session = MarketSession(weekday=0, open_time="08:00", close_time="17:00")
+    assert session.open_time == "08:00"
+    with pytest.raises(ValidationError):
+        MarketSession(weekday=0, open_time="8:00", close_time="17:00")
