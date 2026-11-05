@@ -62,5 +62,6 @@ class EMA200TrendStrategy(Strategy):
             created_at=datetime.now(timezone.utc), signal_bar_close_time=stamp,
             expires_at=max(stamp + timedelta(hours=4), datetime.now(timezone.utc) + timedelta(hours=4)), entry_price=entry, stop_loss=stop,
             take_profit=target, regime_fit=0.0, signal_quality=0.0,
-            data_quality_valid=False, evidence=["EMA200 close crossover", "ATR stop distance"],\n            currency_exposures=infer_currency_exposures(symbol),
+            data_quality_valid=False, evidence=["EMA200 close crossover", "ATR stop distance"],
+            currency_exposures=infer_currency_exposures(symbol),
         )]
