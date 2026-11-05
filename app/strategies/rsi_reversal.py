@@ -53,5 +53,6 @@ class RSIReversalStrategy(Strategy):
             created_at=now, signal_bar_close_time=stamp,
             expires_at=max(stamp + timedelta(hours=4), now + timedelta(hours=4)),
             entry_price=entry, stop_loss=stop, take_profit=target,
-            evidence=[f"RSI({self.period}) threshold recross"],\n            currency_exposures=infer_currency_exposures(symbol),
+            evidence=[f"RSI({self.period}) threshold recross"],
+            currency_exposures=infer_currency_exposures(symbol),
         )]
