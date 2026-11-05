@@ -1,9 +1,16 @@
 """Shared strategy contract and immutable signal candidate model."""
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+def infer_currency_exposures(symbol: str) -> list[str]:
+    """Infer base/quote factors from common six-letter FX/metal symbols."""
+    match = re.search(r"[A-Z]{6}", symbol.upper())
+    return [match.group(0)[:3], match.group(0)[3:]] if match else []
 
 
 class SignalCandidate(BaseModel):
