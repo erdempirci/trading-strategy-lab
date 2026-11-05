@@ -10,6 +10,7 @@ from app.strategies.base import SignalCandidate
 class RiskPolicy:
     risk_per_trade_pct: Decimal = Decimal("0.0025")
     max_open_risk_pct: Decimal = Decimal("0.0075")
+    max_currency_factor_risk_pct: Decimal = Decimal("0.005")
     daily_loss_limit_pct: Decimal = Decimal("0.01")
     weekly_loss_limit_pct: Decimal = Decimal("0.025")
     max_drawdown_pct: Decimal = Decimal("0.05")
@@ -77,6 +78,8 @@ class RiskGovernor:
             reasons.append("live_execution_forbidden_in_this_release")
         if not candidate.data_quality_valid:
             reasons.append("market_data_not_validated")
+        if candidate.expires_at <= __import__("datetime").datetime.now(__import__("datetime").timezone.utc):
+            reasons.append("expired_candidate")
         if account.equity <= 0 or account.high_water_mark <= 0:
             reasons.append("invalid_equity_state")
         if contract.tick_size <= 0 or contract.tick_value_per_lot <= 0 or contract.volume_step <= 0:
@@ -95,6 +98,8 @@ class RiskGovernor:
             reasons.append("max_open_positions_reached")
         if account.used_margin >= equity * self.policy.max_margin_utilization_pct:
             reasons.append("margin_utilization_limit_reached")
+        if margin_required_per_lot is None or margin_required_per_lot <= 0:
+            reasons.append("margin_requirement_unknown_or_invalid")
         if reasons:
             return RiskDecision("REJECTED", tuple(reasons))
 
@@ -113,6 +118,13 @@ class RiskGovernor:
         if remaining_open_risk <= 0:
             return RiskDecision("REJECTED", ("portfolio_open_risk_limit_reached",))
         risk_budget = min(risk_budget, remaining_open_risk)
+        candidate_currencies = set(candidate.currency_exposures)
+        same_factor_risk = sum((p.risk_amount for p in account.positions
+                                if candidate_currencies.intersection(p.currency_exposures)), Decimal("0"))
+        remaining_currency_risk = equity * self.policy.max_currency_factor_risk_pct - same_factor_risk
+        if remaining_currency_risk <= 0:
+            return RiskDecision("REJECTED", ("currency_factor_risk_limit_reached",))
+        risk_budget = min(risk_budget, remaining_currency_risk)
         ticks = stop_distance / contract.tick_size
         loss_per_lot = ticks * contract.tick_value_per_lot
         if loss_per_lot <= 0:
